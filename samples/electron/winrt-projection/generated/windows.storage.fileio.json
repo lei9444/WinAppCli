@@ -1,0 +1,12 @@
+{
+  "type": "Windows.Storage.FileIO",
+  "methods": [
+    {
+      "name": "ReadTextAsync",
+      "attributes": "Public | Static",
+      "signature": "AAEAEQ=="
+    }
+  ],
+  "generatedAt": "2025-11-24T00:00:00Z",
+  "notes": "Static metadata stub sufficient for the demo projection"
+}

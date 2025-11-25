@@ -6,6 +6,9 @@ const path = require('path');
 module.exports = {
   packagerConfig: {
     asar: true,
+    asarUnpack: [
+      '**/winrt-projection/**'
+    ],
     ignore: [
       /^\/\.winapp($|\/)/,
       /^\/winapp\.yaml$/,
@@ -48,7 +51,8 @@ module.exports = {
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+      // Native WinRT bridge lives in app.asar.unpacked; keep this fuse disabled so it can be loaded.
+      [FuseV1Options.OnlyLoadAppFromAsar]: false,
     }),
   ],
 };

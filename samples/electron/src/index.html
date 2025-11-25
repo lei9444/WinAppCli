@@ -10,7 +10,34 @@
     <p>Welcome to your Electron application.</p>
     <button id="show-notification">Show Notification</button>
     <button id="show-runtime-version">Show Runtime Version from C#</button>
+    <section class="fileio-demo">
+      <h2>FileIO.ReadTextAsync demo</h2>
+      <p>Enter a fully-qualified path to a text file that the app can access.</p>
+      <div class="fileio-controls">
+        <input id="file-path" type="text" value="" placeholder="Loading test file path..." />
+        <button id="read-text">Read Text</button>
+      </div>
+      <pre id="file-output" class="file-output" aria-live="polite"></pre>
+    </section>
+    <section class="ocr-demo">
+      <h2>AI Text Recognition (Windows App SDK)</h2>
+      <p>Uses Windows 11 AI features with NPU/GPU acceleration.</p>
+      <div id="ai-status" style="padding: 10px; margin-bottom: 10px; background: #f0f0f0; border-radius: 4px;">
+        Checking AI availability...
+      </div>
+      <div class="fileio-controls">
+        <input id="image-path" type="text" value="" placeholder="C:\image.png" />
+        <button id="recognize-btn">Recognize Text</button>
+      </div>
+      <pre id="ocr-output" class="file-output" aria-live="polite"></pre>
+    </section>
     <script defer>
+      // Load test file path on startup
+      (async () => {
+        const testPath = await window.electronAPI.getTestFilePath();
+        document.getElementById('file-path').value = testPath;
+      })();
+
       document.getElementById('show-notification').addEventListener('click', () => {
         window.electronAPI.showNotification('Hello', 'This is a WinRT notification from Electron!');
       });
@@ -18,6 +45,67 @@
       document.getElementById('show-runtime-version').addEventListener('click', async () => {
         var version = await window.electronAPI.getWindowsAppRuntimeVersion();
         alert("We're running with WindowsAppRuntime version " + version);
+      });
+
+      const readButton = document.getElementById('read-text');
+      const filePathInput = document.getElementById('file-path');
+      const fileOutput = document.getElementById('file-output');
+
+      readButton.addEventListener('click', async () => {
+        const filePath = filePathInput.value.trim();
+        if (!filePath) {
+          fileOutput.textContent = 'Enter a valid path first.';
+          return;
+        }
+
+        fileOutput.textContent = 'Reading via Windows.Storage.FileIO...';
+
+        try {
+          const text = await window.WinRT.readTextAsync(filePath);
+          fileOutput.textContent = text;
+        } catch (err) {
+          fileOutput.textContent = `Failed: ${err?.message ?? err}`;
+        }
+      });
+
+      // OCR functionality
+      const recognizeBtn = document.getElementById('recognize-btn');
+      const imagePathInput = document.getElementById('image-path');
+      const ocrOutput = document.getElementById('ocr-output');
+      const aiStatusDiv = document.getElementById('ai-status');
+
+      // Listen for AI status updates from main process
+      window.electronAPI.onAIStatusUpdate((status) => {
+        const stateMap = {
+          'Ready': { color: '#d4edda', text: '✓ AI model ready (NPU/GPU acceleration available)' },
+          'NotReady': { color: '#fff3cd', text: '⚠ AI model downloading... Please wait and try again' },
+          'NotSupported': { color: '#f8d7da', text: '✗ AI features unavailable: ' + (status.message || 'Requires Windows 11 23H2+') }
+        };
+        const info = stateMap[status.state] || { color: '#f0f0f0', text: 'Unknown AI state: ' + status.state };
+        aiStatusDiv.style.backgroundColor = info.color;
+        aiStatusDiv.textContent = info.text;
+        recognizeBtn.disabled = (status.state !== 'Ready');
+      });
+
+      recognizeBtn.addEventListener('click', async () => {
+        const imagePath = imagePathInput.value.trim();
+        if (!imagePath) {
+          ocrOutput.textContent = 'Enter a valid image path first.';
+          return;
+        }
+
+        ocrOutput.textContent = 'Recognizing text from image...';
+
+        try {
+          const text = await window.WinRT.recognizeText(imagePath);
+          if (text) {
+            ocrOutput.textContent = text;
+          } else {
+            ocrOutput.textContent = 'No text found in image.';
+          }
+        } catch (err) {
+          ocrOutput.textContent = `Failed: ${err?.message ?? err}`;
+        }
       });
     </script>
   </body>

@@ -11,7 +11,7 @@ pwsh
 cd <reporoot>\samples\electron
 
 # Build the winapp CLI
-..\..\build-cli.ps1
+..\..\scripts\build-cli.ps1
 
 # Install/restore the project dependencies
 npm install
@@ -99,3 +99,24 @@ The sample contains an example of packaging and signing an MSIX with `winapp`. T
 ```
 
 > **Note:** The output folder path is currently hardcoded. You may need to modify this script based on your architecture and output configuration.
+
+## WinRT JS Projection prototype
+
+The `samples/electron/winrt-projection` folder contains a minimal WinRT JS projection that currently exposes `Windows.Storage.FileIO.ReadTextAsync`.
+
+1. **Build the native bridge**
+   ```pwsh
+   cd samples/electron
+   npm run build-winrt-bridge
+   ```
+   This compiles `winrt-projection/addon/fileio_bridge.cc` via `node-gyp` and produces `winrt_bridge.node` under `winrt-projection/addon/build/Release`.
+
+2. **Run the sample** – `npm start` launches Electron; the renderer now has a "FileIO.ReadTextAsync demo" panel. Provide a path (e.g., `C:\temp\demo.txt`) and press **Read Text** to call the WinRT API through the projection.
+
+3. **Regenerate metadata (optional)** – Use the included .NET tool if you wish to regenerate `generated/windows.storage.fileio.json` from your local Windows SDK:
+   ```pwsh
+   cd samples/electron/winrt-projection/tools/winmd-dump
+   dotnet run -- "${env:ProgramFiles(x86)}\Windows Kits\10\UnionMetadata\<sdk-version>\Windows.winmd" Windows.Storage.FileIO ..\..\generated\windows.storage.fileio.json
+   ```
+
+Because the preload script exposes `window.WinRT.readTextAsync`, you can reuse the same proxy from any renderer component and expand the metadata/bridge to cover more APIs over time.

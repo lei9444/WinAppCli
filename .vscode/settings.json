@@ -77,5 +77,8 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
+    },
+    "files.watcherExclude": {
+        "**/samples/electron/out/**": true
     }
 }
