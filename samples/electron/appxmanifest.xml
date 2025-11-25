@@ -9,7 +9,8 @@
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
-  IgnorableNamespaces="uap uap2 uap3 rescap desktop desktop6 uap10">
+  xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
+  IgnorableNamespaces="uap uap2 uap3 rescap desktop desktop6 uap10 systemai">
 
   <Identity
     Name="electronWinappSample"
@@ -23,7 +24,8 @@
   </Properties>
 
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18362.0" MaxVersionTested="10.0.26100.0" />
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26621.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18362.0" MaxVersionTested="10.0.26621.0" />
     <PackageDependency Name="Microsoft.WindowsAppRuntime.2.0-experimental1" MinVersion="0.638.1631.0" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
   </Dependencies>
 
@@ -50,6 +52,6 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="broadFileSystemAccess" />
+    <systemai:Capability Name="systemAIModels"/>
   </Capabilities>
 </Package>

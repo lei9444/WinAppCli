@@ -153,18 +153,46 @@ Napi::Value RecognizeText(const Napi::CallbackInfo& info)
     return deferred.Promise();
 }
 
-Napi::Value CheckAIAvailability(const Napi::CallbackInfo& info)
+namespace
 {
-    auto env = info.Env();
-    try
+class CheckAIAvailabilityWorker final : public Napi::AsyncWorker
+{
+public:
+    CheckAIAvailabilityWorker(Napi::Env env, Napi::Promise::Deferred deferred)
+        : Napi::AsyncWorker(env), deferred_(std::move(deferred))
+    {
+    }
+
+    void Execute() override
     {
         init_apartment(apartment_type::multi_threaded);
-        auto readyState = TextRecognizer::GetReadyState();
+        try
+        {
+            readyState_ = TextRecognizer::GetReadyState();
+        }
+        catch (const winrt::hresult_error& ex)
+        {
+            hasError_ = true;
+            errorMessage_ = winrt::to_string(ex.message());
+        }
+        catch (const std::exception& ex)
+        {
+            hasError_ = true;
+            errorMessage_ = ex.what();
+        }
+    }
+
+    void OnOK() override
+    {
+        if (hasError_)
+        {
+            deferred_.Reject(Napi::Error::New(Env(), errorMessage_).Value());
+            return;
+        }
+
+        auto result = Napi::Object::New(Env());
         
-        auto result = Napi::Object::New(env);
-        result.Set("state", static_cast<int>(readyState));
-        
-        switch (readyState)
+        switch (readyState_)
         {
         case AIFeatureReadyState::Ready:
             result.Set("state", "Ready");
@@ -187,13 +215,24 @@ Napi::Value CheckAIAvailability(const Napi::CallbackInfo& info)
             result.Set("message", "Unknown state");
         }
         
-        return result;
+        deferred_.Resolve(result);
     }
-    catch (const winrt::hresult_error& ex)
-    {
-        Napi::Error::New(env, winrt::to_string(ex.message())).ThrowAsJavaScriptException();
-        return env.Undefined();
-    }
+
+private:
+    AIFeatureReadyState readyState_;
+    bool hasError_ = false;
+    std::string errorMessage_;
+    Napi::Promise::Deferred deferred_;
+};
+}
+
+Napi::Value CheckAIAvailability(const Napi::CallbackInfo& info)
+{
+    auto env = info.Env();
+    auto deferred = Napi::Promise::Deferred::New(env);
+    auto* worker = new CheckAIAvailabilityWorker(env, deferred);
+    worker->Queue();
+    return deferred.Promise();
 }
 
 Napi::Object InitOcr(Napi::Env env, Napi::Object exports)

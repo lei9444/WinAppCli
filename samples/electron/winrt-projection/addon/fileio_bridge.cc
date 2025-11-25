@@ -87,7 +87,8 @@ Napi::Object InitOcr(Napi::Env env, Napi::Object exports);
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
 {
-    init_apartment(apartment_type::single_threaded);
+    // Don't call init_apartment here - let each async worker initialize its own thread
+    // init_apartment(apartment_type::single_threaded);
     exports.Set("readText", Napi::Function::New(env, ReadText, "readText"));
     
     // Initialize OCR module

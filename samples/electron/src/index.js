@@ -48,7 +48,7 @@ const createWindow = () => {
     try {
       const proxy = getWinrtProxy();
       if (proxy?.Windows?.Media?.Ocr?.checkAIAvailability) {
-        const status = proxy.Windows.Media.Ocr.checkAIAvailability();
+        const status = await proxy.Windows.Media.Ocr.checkAIAvailability();
         mainWindow.webContents.send('ai-status-update', status);
       } else {
         mainWindow.webContents.send('ai-status-update', { 
